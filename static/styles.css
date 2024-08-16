@@ -1,0 +1,105 @@
+/* styles.css */
+
+/* Global Styles */
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: #f8f9fa;
+    color: #333;
+    margin: 0;
+    padding: 0;
+}
+
+h1 {
+    text-align: center;
+    color: #007bff;
+    margin-top: 30px;
+    font-size: 2.5rem;
+}
+
+h2 {
+    color: #333;
+    margin-top: 30px;
+    text-align: center;
+    font-size: 1.8rem;
+}
+
+form {
+    margin-top: 20px;
+    text-align: center;
+}
+
+button {
+    background-color: #007bff;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    margin-top: 10px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 5px;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+/* Live Capture Styles */
+#live-capture-container {
+    text-align: center;
+    margin-top: 20px;
+}
+
+#live-video {
+    width: 400px;
+}
+
+#live-canvas {
+    display: none;
+}
+
+#live-image {
+    width: 400px;
+    display: none;
+}
+
+/* Sketch Images Styles */
+.sketch-images {
+    display: flex;
+    justify-content: center;
+    margin-top: 20px;
+}
+
+.sketch-images div {
+    margin-right: 20px;
+}
+
+img {
+    max-width: 400px;
+    height: auto;
+}
+
+/* Download Button Styles */
+.download-button {
+    text-align: center;
+    margin-top: 10px;
+}
+
+.download-button button {
+    background-color: #28a745;
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    cursor: pointer;
+    font-size: 1rem;
+    border-radius: 5px;
+}
+
+.download-button button:hover {
+    background-color: #218838;
+}
+
+/* Center align Live Capture buttons */
+#live-capture-buttons {
+    text-align: center;
+    margin-top: 20px;
+}

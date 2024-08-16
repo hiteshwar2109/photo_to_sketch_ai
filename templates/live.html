@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Camera</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+</head>
+<body>
+    <h1>Live Camera</h1>
+    <div id="camera-feed"></div>
+    <button id="capture-button">Capture</button>
+    <canvas id="canvas" style="display: none;"></canvas>
+    <img id="output-image" style="display: none;">
+    <a id="download-button" download="sketch.jpg" style="display: none;">Download Sketch</a>
+    <script>
+        const video = document.createElement('video');
+        video.setAttribute('autoplay', '');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(stream => {
+                video.srcObject = stream;
+                document.getElementById('camera-feed').appendChild(video);
+            })
+            .catch(error => {
+                console.error('Error accessing camera: ', error);
+            });
+
+        document.getElementById('capture-button').addEventListener('click', () => {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, video.videoWidth, video.videoHeight);
+            const imageDataURL = canvas.toDataURL('image/jpeg');
+            $.ajax({
+                type: 'POST',
+                url: '/upload',
+                data: { image_data: imageDataURL },
+                success: function(response) {
+                    const imageURL = URL.createObjectURL(new Blob([response], { type: 'image/jpeg' }));
+                    document.getElementById('output-image').src = imageURL;
+                    document.getElementById('output-image').style.display = 'block';
+                    document.getElementById('download-button').href = imageURL;
+                    document.getElementById('download-button').style.display = 'block';
+                },
+                error: function(error) {
+                    console.error('Error uploading image: ', error);
+                }
+            });
+        });
+    </script>
+</body>
+</html>

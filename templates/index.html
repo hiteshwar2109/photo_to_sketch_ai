@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photo to Sketch Converter</title>
+    <link rel="stylesheet" href="static/styles.css">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+
+        h1 {
+            text-align: center;
+            color: #007bff;
+            margin-top: 30px;
+            font-size: 2.5rem;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 30px;
+            text-align: center;
+            font-size: 1.8rem;
+        }
+
+        form {
+            margin-top: 20px;
+            text-align: center;
+        }
+
+        button {
+            background-color: #007bff;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            margin-top: 10px;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 5px;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        #live-capture-container {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        .sketch-images {
+            display: flex;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .sketch-images div {
+            margin-right: 20px;
+        }
+
+        img {
+            max-width: 400px;
+            height: auto;
+        }
+
+        .download-button {
+            text-align: center;
+            margin-top: 10px;
+        }
+
+        .download-button button {
+            background-color: #28a745;
+            color: #fff;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            font-size: 1rem;
+            border-radius: 5px;
+        }
+
+        .download-button button:hover {
+            background-color: #218838;
+        }
+
+        /* Center align Live Capture buttons */
+        #live-capture-buttons {
+            text-align: center;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Photo to Sketch Converter</h1>
+    
+    <!-- Direct File Upload Form -->
+    <form id="upload-form" action="/upload" method="POST" enctype="multipart/form-data">
+        <input type="file" id="file-input" name="file" accept="image/*">
+        <button type="submit">Convert Direct Upload</button>
+        <!-- Add download button for direct upload -->
+        <div class="download-button" id="direct-download">
+            <button id="direct-download-btn" style="display: none;">Download Direct Upload Sketch</button>
+        </div>
+    </form>
+
+    <!-- Live Capture -->
+    <h2>Live Capture</h2>
+    <div id="live-capture-container">
+        <video id="live-video" width="400" autoplay></video>
+        <canvas id="live-canvas" style="display: none;"></canvas>
+        <img id="live-image" alt="Live Capture" width="400" style="display: none;">
+        <button onclick="capture()">Capture</button>
+    </div>
+
+    <!-- Center align Live Capture buttons -->
+    <div id="live-capture-buttons">
+        <button onclick="convertLiveCapture()">Convert Live Capture</button>
+        <!-- Add download button for live capture -->
+        <div class="download-button" id="live-download">
+            <button id="live-download-btn" style="display: none;">Download Live Capture Sketch</button>
+        </div>
+    </div>
+
+    <!-- Display Uploaded Image -->
+    <div class="sketch-images">
+        {% if output %}
+            <div>
+                <h2>Original Image</h2>
+                <img src="{{ output }}" alt="Original Image">
+            </div>
+            <div>
+                <h2>Sketch</h2>
+                <img id="sketch-image" src="{{ sketch }}" alt="Sketch Image">
+            </div>
+            <!-- Add download button for generated sketch -->
+            <div class="download-button"><button onclick="downloadGeneratedSketch()">Download Generated Sketch</button></div>
+        {% endif %}
+    </div>
+
+    <script>
+        var video = document.getElementById('live-video');
+        var canvas = document.getElementById('live-canvas');
+        var context = canvas.getContext('2d');
+        var liveImage = document.getElementById('live-image');
+
+        var stream; // Variable to store the video stream
+
+        navigator.mediaDevices.getUserMedia({ video: true })
+            .then(function(s) {
+                stream = s; // Store the video stream in the variable
+                video.srcObject = stream;
+                video.play();
+            })
+            .catch(function(error) {
+                console.error('Error accessing camera: ', error);
+            });
+
+        function capture() {
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            context.drawImage(video, 0, 0, canvas.width, canvas.height);
+            liveImage.src = canvas.toDataURL('image/jpeg');
+
+            // Stop the video stream after capturing an image
+            stream.getTracks().forEach(track => {
+                track.stop();
+            });
+
+            // Display the captured image instead of the video
+            video.style.display = 'none';
+            liveImage.style.display = 'inline';
+
+            // Show download button for live capture
+            document.getElementById('live-download-btn').style.display = 'inline';
+        }
+
+        function convertLiveCapture() {
+            var dataURL = canvas.toDataURL('image/jpeg');
+            var blob = dataURItoBlob(dataURL);
+            var file = new File([blob], 'live_capture.jpg', { type: 'image/jpeg' });
+            var formData = new FormData();
+            formData.append('file', file);
+            fetch('/upload', { method: 'POST', body: formData })
+                .then(response => response.text())
+                .then(data => {
+                    document.body.innerHTML = data;
+                    // Show download button for generated sketch after conversion
+                    document.getElementById('direct-download-btn').style.display = 'inline';
+                })
+                .catch(error => console.error('Error converting live capture: ', error));
+        }
+
+        function dataURItoBlob(dataURI) {
+            var byteString = atob(dataURI.split(',')[1]);
+            var mimeString = dataURI.split(',')[0].split(':')[1].split(';')[0];
+            var ab = new ArrayBuffer(byteString.length);
+            var ia = new Uint8Array(ab);
+            for (var i = 0; i < byteString.length; i++) {
+                ia[i] = byteString.charCodeAt(i);
+            }
+            var blob = new Blob([ab], { type: mimeString });
+            return blob;
+        }
+
+        function downloadGeneratedSketch() {
+            var sketchImage = document.getElementById('sketch-image'); // Use the sketch image specifically
+            var link = document.createElement('a');
+            link.href = sketchImage.src;
+            link.download = 'sketch.jpg';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>
